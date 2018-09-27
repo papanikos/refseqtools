@@ -1,4 +1,4 @@
-# NCBI RefSeq Release
+# download_refseq_release
 
 Scripts for handling NCBI taxonomy and RefSeq Release information.
 
