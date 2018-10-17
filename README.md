@@ -14,8 +14,8 @@ Utilities to handle the refseq release information
 
 For now development installation is recommended
 ```
-git clone <git/path/to/refseqtools>
-cd <cloned/path>
+git clone https://github.com/papanikos/refseqtools.git
+cd refseqtools
 python setup.py develop
 ```
 
