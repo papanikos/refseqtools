@@ -1,6 +1,0 @@
-{
-  "FilterDomainFastas.domainDir": "/path/to/downloaded/invertebrate",
-  "FilterDomainFastas.excludeAccFile": "/path/to/nuccore.exclude.txt",
-  "FilterDomainFastas.dustmaskerExe": "/path/to/ncbi/bin/dustmasker"
-}
-
