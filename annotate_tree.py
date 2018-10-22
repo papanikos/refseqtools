@@ -288,10 +288,10 @@ def main():
                 # Turn them into a tuple
                 keep_accessions = tuple(prefixes)
             node.seq_content = sum_node_sequences(node, refseq_mapping2, keep_accessions)
-        # else:
+        else:
         #     # If no string is provided, use None
         #     # TO DO: better use optional argument for the functions
-        #     node.seq_content = sum_node_sequences(node, refseq_mapping2, args.keep_accessions)
+            node.seq_content = sum_node_sequences(node, refseq_mapping2, args.keep_accessions)
 
     if args.plot_pies:
         for node in tree.traverse(strategy='postorder'):
