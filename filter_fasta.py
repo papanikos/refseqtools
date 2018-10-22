@@ -47,6 +47,7 @@ parser.add_argument('--exclude-accessions-from-file',
 
 refseq_genomic_prefixes = {"NC", "NW", "NG", "NT", "NZ_CP", "NZ_CM", "NZ", "AC"}
 
+
 class FastaFilterer:
     """
     An object that filters sequences from a given fasta file, based on given taxonomic identifiers
@@ -66,7 +67,7 @@ class FastaFilterer:
             self.taxonomy_filtering = True
             print("Loading taxonomy information")
             self.acc2taxid = get_acc2taxid_map(acc2taxid_json)
-            self.ncbiTree = NCBITaxa()
+            self.ncbiTree = NCBITaxa(dbfile="/exports/sascstudent/project-RefseqRelease/analysis/ete3_db/taxa.sqlite")
             if include_taxa and exclude_taxa:
                 self.tmode = "both"
                 taxa_in = set(create_full_taxa_list(include_taxa, self.ncbiTree, include_parent=True))
@@ -81,7 +82,9 @@ class FastaFilterer:
                 self.final_taxa_list = create_full_taxa_list(include_taxa, self.ncbiTree, include_parent=True)
             elif exclude_taxa and not include_taxa:
                 self.tmode = "exclusive_only"
+                print("exclusive only")
                 self.final_taxa_list = create_full_taxa_list(exclude_taxa, self.ncbiTree, include_parent=True)
+                print(self.final_taxa_list)
         else:
             self.final_taxa_list = None
             self.taxonomy_filtering = None
@@ -136,41 +139,55 @@ class FastaFilterer:
     def create_final_accessions_set(self):
         fasta_accessions = self.get_fasta_accessions_set()
         # 1. ALL FILTERS ENABLED
-        if self.taxonomy_filtering and self.accession_prefix_filtering and self.accession_file_filtering:
+        # FIX ME
+        # The self.amode is not covered here...
+        if self.taxonomy_filtering \
+                and self.accession_prefix_filtering \
+                and self.accession_file_filtering:
+
             taxonomy_accessions = self.create_taxonomy_accessions_set()
             if self.tmode in ["both", "inclusive_only"]:
                 tmp_accessions = fasta_accessions.intersection(taxonomy_accessions)
-                if self.pmode in ["both", "inclusive_only"]:
-                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
-                                                                       self.acc_prefixes,
-                                                                       exclusive = False)
-                elif self.pmode == "exclusive_only":
-                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
-                                                                       self.acc_prefixes,
-                                                                       exclusive = True)
-                else:
-                    print("Why am I here...?")
-            elif self.tmode == "exclusive_only":
-                tmp_accessions = fasta_accessions.difference(taxonomy_accessions)
-                if self.pmode in ["both", "inclusive_only"]:
-                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
-                                                                       self.acc_prefixes,
-                                                                       exclusive = False)
-                elif self.pmode == "exclusive_only":
-                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
-                                                                       self.acc_prefixes,
-                                                                       exclusive = True)
-                else:
-                    print("Why am I here")
-        # 2. FILE AND PREFIX
-        elif self.accession_file_filtering and self.accession_prefix_filtering:
-            if self.amode in ["both", "inclusive_only"]:
-                tmp_accessions = fasta_accessions.intersection(self.pre_accessions)
+
                 if self.pmode in ["both", "inclusive_only"]:
                     final_accessions = filter_accession_list_on_prefix(tmp_accessions,
                                                                        self.acc_prefixes,
                                                                        exclusive=False)
                 elif self.pmode == "exclusive_only":
+                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
+                                                                       self.acc_prefixes,
+                                                                       exclusive=True)
+                else:
+                    print("Why am I here...?")
+
+            elif self.tmode == "exclusive_only":
+                tmp_accessions = fasta_accessions.difference(taxonomy_accessions)
+                if self.pmode in ["both", "inclusive_only"]:
+                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
+                                                                       self.acc_prefixes,
+                                                                       exclusive=False)
+                elif self.pmode == "exclusive_only":
+                    print("excluding prefixes")
+                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
+                                                                       self.acc_prefixes,
+                                                                       exclusive=True)
+                else:
+                    print("Why am I here")
+
+        # 2. FILE AND PREFIX
+        elif self.accession_file_filtering \
+                and self.accession_prefix_filtering \
+                and not self.taxonomy_filtering:
+
+            if self.amode in ["both", "inclusive_only"]:
+                tmp_accessions = fasta_accessions.intersection(self.pre_accessions)
+                if self.pmode in ["both", "inclusive_only"]:
+                    print("including prefixes")
+                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
+                                                                       self.acc_prefixes,
+                                                                       exclusive=False)
+                elif self.pmode == "exclusive_only":
+                    print("excluding prefixes")
                     final_accessions = filter_accession_list_on_prefix(tmp_accessions,
                                                                        self.acc_prefixes,
                                                                        exclusive=True)
@@ -183,20 +200,28 @@ class FastaFilterer:
                                                                        self.acc_prefixes,
                                                                        exclusive=False)
                 elif self.pmode == "exclusive_only":
+                    print("excluding prefixes")
                     final_accessions = filter_accession_list_on_prefix(tmp_accessions,
                                                                        self.acc_prefixes,
                                                                        exclusive=True)
             else:
                 print("Why am I here...")
+
         # 3. FILE ONLY
-        elif self.accession_file_filtering:
+        elif self.accession_file_filtering \
+                and not self.accession_prefix_filtering \
+                and not self.taxonomy_filtering:
+
             if self.amode in ["both", "inclusive_only"]:
-                final_accessions=fasta_accessions.union(self.pre_accessions)
+                final_accessions = fasta_accessions.union(self.pre_accessions)
             elif self.amode == "exclusive_only":
                 final_accessions = fasta_accessions.difference(self.pre_accessions)
 
         # 4. PREFIX ONLY
-        elif self.accession_prefix_filtering:
+        elif self.accession_prefix_filtering \
+                and not self.accession_file_filtering \
+                and not self.taxonomy_filtering:
+
             if self.pmode in ["both", "inclusive_only"]:
                 final_accessions = filter_accession_list_on_prefix(fasta_accessions,
                                                                    self.acc_prefixes,
@@ -205,22 +230,34 @@ class FastaFilterer:
                 final_accessions = filter_accession_list_on_prefix(fasta_accessions,
                                                                    self.acc_prefixes,
                                                                    exclusive=True)
+
         # 5. TAXONOMY AND PREFIX
-        elif self.taxonomy_filtering and self.accession_prefix_filtering:
+        elif self.taxonomy_filtering \
+                and self.accession_prefix_filtering \
+                and not self.accession_file_filtering:
+
             taxonomy_accessions = self.create_taxonomy_accessions_set()
             if self.tmode in ["both", "inclusive_only"]:
                 tmp_accessions = fasta_accessions.intersection(taxonomy_accessions)
-                if self.pmode in ["both", "inclusive_only"]:
-                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
-                                                                       self.acc_prefixes,
-                                                                       exclusive = False)
-                elif self.pmode == "exclusive_only":
-                    final_accessions = filter_accession_list_on_prefix(tmp_accessions,
-                                                                       self.acc_prefixes,
-                                                                       exclusive = True)
+            elif self.tmode == "exclusive_only":
+                tmp_accessions = fasta_accessions.difference(taxonomy_accessions)
+            else:
+                tmp_accessions = set()
+
+            if self.pmode in ["both", "inclusive_only"]:
+                final_accessions = filter_accession_list_on_prefix(tmp_accessions,
+                                                                   self.acc_prefixes,
+                                                                   exclusive=False)
+            elif self.pmode == "exclusive_only":
+                final_accessions = filter_accession_list_on_prefix(tmp_accessions,
+                                                                   self.acc_prefixes,
+                                                                   exclusive=True)
 
         # 6. TAXONOMY AND ACCESSION FILE
-        elif self.taxonomy_filtering and self.accession_file_filtering:
+        elif self.taxonomy_filtering \
+                and self.accession_file_filtering \
+                and not self.accession_prefix_filtering:
+
             taxonomy_accessions = self.create_taxonomy_accessions_set()
             if self.tmode in ["both", "inclusive_only"]:
                 tmp_accessions = fasta_accessions.intersection(taxonomy_accessions)
@@ -231,6 +268,7 @@ class FastaFilterer:
 
         else:
             print("Case not covered")
+
         return set(final_accessions)
 
     def make_output_filename(self, fp_in, fasta_type="genomic"):
@@ -273,7 +311,7 @@ class FastaFilterer:
 
         return counter, fp_out
 
-    ### THIS IS OBSOLETE
+    # THIS IS OBSOLETE
     def filter_accession_to_file(self, fp_in, acc_prefixes):
         fp_out = self.make_output_filename(fp_in)
         counter = 0
@@ -305,8 +343,6 @@ class FastaFilterer:
         return fp_in, in_counter, fp_out, out_counter
 
 
-
-
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -326,7 +362,7 @@ if __name__ == '__main__':
         acc_in = ['AC', 'NG', 'NC', 'NW', 'NZ', 'NZ_CP', 'NZ_CM', 'NT']
 
     if args.acc_ex:
-        acc_ex = [acc.strip() for acc in args.acc_ex.split(',') if args.acc_ex]
+        acc_ex = [acc.strip() for acc in args.acc_ex.split(',')]
     else:
         acc_ex = None
 
@@ -369,4 +405,3 @@ if __name__ == '__main__':
         print("{}\t(removed)\t{}\t{}\t{}".format(fp_in, seqs_in, fp_out, seqs_out))
 
     print("Done!")
-
