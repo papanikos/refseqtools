@@ -67,7 +67,7 @@ class FastaFilterer:
             self.taxonomy_filtering = True
             print("Loading taxonomy information")
             self.acc2taxid = get_acc2taxid_map(acc2taxid_json)
-            self.ncbiTree = NCBITaxa(dbfile="/exports/sascstudent/project-RefseqRelease/analysis/ete3_db/taxa.sqlite")
+            self.ncbiTree = NCBITaxa()
             if include_taxa and exclude_taxa:
                 self.tmode = "both"
                 taxa_in = set(create_full_taxa_list(include_taxa, self.ncbiTree, include_parent=True))
