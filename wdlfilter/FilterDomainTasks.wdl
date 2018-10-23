@@ -1,14 +1,15 @@
 task FilterFasta {
-	String preCommand="source activate ete3"
+	String? preCommand
 	String fastaFilePath # Using String to handle script's os.remove/rename stuff
-	String scriptPath="/path/to/filter_fasta.py" # REPLACE ME
+	String scriptPath
 	Array[String]+? includeTaxa
 	Array[String]+? excludeTaxa
 	Array[String]+? includeAccPrefixes
 	Array[String]? excludeAccPrefixes
 	File? includeAccFile
 	File? excludeAccFile
-	File? refseqJson = "/path/to/RefSeq.89.DNA.json" # REPLACE ME
+	File? refseqJson
+	String? taxDbPath
 
 	String filteredFastaPath = sub(fastaFilePath, "genomic", "filtered_genomic")
 
@@ -26,6 +27,7 @@ task FilterFasta {
 		${"--exclude-accessions-from-file " + excludeAccFile} \
 		${true="--include-taxa " false="" defined(includeTaxa)} ${sep="," includeTaxa} \
 		${true="--exclude-taxa " false="" defined(excludeTaxa)} ${sep="," excludeTaxa} \
+		${"--dbfile " + taxDbPath} \
 		${"-j " + refseqJson}
 	}
 

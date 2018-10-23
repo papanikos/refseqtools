@@ -2,6 +2,9 @@ import "FilterDomainTasks.wdl" as Tasks
 
 workflow FilterDomainFastas {
 	String domainDir
+	String filterScriptPath
+	String refseqJson
+	String taxDbPath
 	Array[String]? includeAccPrefixes
 	Array[String]+? includeTaxa
 	Array[String]+? excludeTaxa
@@ -19,6 +22,9 @@ workflow FilterDomainFastas {
 	scatter (fastaFile in RawFastas.fastaFiles) {
 		call Tasks.FilterFasta {
 			input:
+			    scriptPath = filterScriptPath,
+			    refseqJson = refseqJson,
+			    taxDbPath = taxDbPath,
 				fastaFilePath = fastaFile,
 				includeAccPrefixes = includeAccPrefixes,
 				excludeAccPrefixes = excludeAccPrefixes,
