@@ -12,6 +12,13 @@ building process, for use with metagenomics classifiers.
 - A mapping of sequences to their corresponding organism in the tree
 - A mapping of the taxonomy ids to meaningful names
 
+## Requirements
+The information covered here referes to the old_master branch.
+To get the necessary scripts and workflows you should run
+`git clone --single-branch -b old_master https://github.com/papanikos/refseqtools.git`.
+This will also fetch the `requirements.yml` required to set up a conda environment.
+
+
 # An example
 
 We will try to build a centrifuge index for all viruses,
@@ -78,7 +85,7 @@ Let's also put this into a more convenient data structure (a json file)
 that can be readily loaded into scripts that use this information to calculate
 sequence contents per taxonomy. This is done with the `convert_acc2taxid_to_json.py`
 utility, where a taxid is used as a primary key and all accessions and sequence
-sizes are stored per taxid.
+sizes are stored under it.
 
 ```
 $ python convert_acc2taxid -i Refseq90.DNA.gz -o Refseq90.DNA.json 
@@ -97,16 +104,10 @@ For this we are using the ete3 package, which provides:
 First we need to instantiate a SQL DB that ete3 uses for the NCBI taxonomy
 manipulation.
 
-- Retrieve the taxonomy information from the NCBI taxonomy DB, locate
-[here](ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/).
+  1. Retrieve the taxonomy information from the NCBI taxonomy DB, located
+here ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz .
 
 This is a tarball that contains all necessary information.
-
-We can extract the required `names.dmp` and `nodes.dmp` for later use.
-
-```
-tar -zxvf taxdump.tar.gz names.dmp nodes.dmp
-```
 
 >The NCBI taxonomy is regularly updated. Downloading this at different time points
 > will affect the end-result of the database creation and all analyses thereafter.
@@ -114,12 +115,19 @@ tar -zxvf taxdump.tar.gz names.dmp nodes.dmp
 ```
 $ wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
 ```
- - Create the database
+
+We can also extract the required `names.dmp` and `nodes.dmp` for later use.
+
+```
+tar -zxvf taxdump.tar.gz names.dmp nodes.dmp
+```
+
+  2. Create the database
  
 ete3 requires a sqlite db file to already exist. We need to first create this
 (empty) database and then point ete3 to the location of the taxdump file (
 downloaded from above) we want
-it to use to populate the database. For demo purposes, this is done here
+it to use to populate the database. For demonstration purposes, this is done here
 with an interactive python session
 ```
 (ete3)$ python
@@ -162,12 +170,12 @@ The `annotate_tree.py` script provides this functionality. For now it relies on
 taxids, so we need to know what the actual taxid for the whole group of viruses
 is. A quick search on the NCBI taxonomy site shows that this is 10239.
 
-If we know feed this into the script we can create a tree visualization that 
+If we now feed this into the script we can create a tree visualization that 
 will summarize all the information for us
 
 > Remember, we created the necessary input in the previous steps.
 > These would be the Refseq90.DNA.json and the NCBI taxonomy database.
-> The full paths to their locations are required to be provided.
+> The full paths to their locations are required.
 
 ```
 $ python annotate_tree.py -t 10239 \
@@ -178,7 +186,7 @@ $ python annotate_tree.py -t 10239 \
 
 The created `viruses.svg` can be opened within a browser window. It summarizes
 all the sequences contained under the Viruses taxonomy, up to the species level.
-This is a very detailed view and somewhat hard to completely browse. We can choose
+This is a very detailed view and somewhat hard to completely browse through. We can choose
 the level at which the same information is visualized with the `-prune` option
 of the script.
 
