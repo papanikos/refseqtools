@@ -43,6 +43,10 @@ parser.add_argument('--exclude-accessions-from-file',
                     dest='acc_ex_file',
                     help="A file containing accessions to be excluded, one per line",
                     required=False)
+parser.add_argument("--dbfile",
+                    dest="dbfile",
+                    help="Path to instantiated ete3 sqlite db",
+                    required=False)
 
 
 refseq_genomic_prefixes = {"NC", "NW", "NG", "NT", "NZ_CP", "NZ_CM", "NZ", "AC"}
@@ -58,7 +62,7 @@ class FastaFilterer:
                  include_taxa, exclude_taxa,
                  include_accessions, exclude_accessions,
                  accessions_infile, accessions_exfile,
-                 acc2taxid_json):
+                 acc2taxid_json, dbfile):
 
         self.fp_in = fp_in
 
@@ -67,7 +71,7 @@ class FastaFilterer:
             self.taxonomy_filtering = True
             print("Loading taxonomy information")
             self.acc2taxid = get_acc2taxid_map(acc2taxid_json)
-            self.ncbiTree = NCBITaxa()
+            self.ncbiTree = NCBITaxa(dbfile=dbfile)
             if include_taxa and exclude_taxa:
                 self.tmode = "both"
                 taxa_in = set(create_full_taxa_list(include_taxa, self.ncbiTree, include_parent=True))
@@ -82,9 +86,7 @@ class FastaFilterer:
                 self.final_taxa_list = create_full_taxa_list(include_taxa, self.ncbiTree, include_parent=True)
             elif exclude_taxa and not include_taxa:
                 self.tmode = "exclusive_only"
-                print("exclusive only")
                 self.final_taxa_list = create_full_taxa_list(exclude_taxa, self.ncbiTree, include_parent=True)
-                print(self.final_taxa_list)
         else:
             self.final_taxa_list = None
             self.taxonomy_filtering = None
@@ -380,7 +382,8 @@ if __name__ == '__main__':
                               acc2taxid_json=args.json_fp,
                               include_taxa=taxa_in, exclude_taxa=taxa_ex,
                               include_accessions=acc_in, exclude_accessions=acc_ex,
-                              accessions_infile=acc_in_file, accessions_exfile=acc_ex_file
+                              accessions_infile=acc_in_file, accessions_exfile=acc_ex_file,
+                              dbfile=args.dbfile
                              )
 
     # Create the set of fasta accessions
