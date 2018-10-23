@@ -23,7 +23,7 @@ on the following criteria:
 
 ## Step 1a. Getting the refseq-release catalog
 
-A catalog that summarizes all the contents of the release is available from
+A catalog that summarizes all the contents of the release is available from 
 [here](ftp://ftp.ncbi.nlm.nih.gov/refseq/release/release-catalog/)
 
 Retrieving the catalog
