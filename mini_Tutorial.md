@@ -231,8 +231,12 @@ file, based on the desired criteria.
 
 If we would like to filter one of the downloaded files according to our criteria
 ```
-$ python filter_fasta.py --exclude-taxa 10508 --exclude-accessions AC \
--i /path/to/downloaded/viral.2.1.fna.gz -j /path/to/Refseq90.DNA.json   
+$ python filter_fasta.py \
+-i /path/to/downloaded/viral.2.1.fna.gz \
+-o /path/to/output/filtered_fasta.fna.gz \
+--exclude-taxa 10508 \
+--exclude-accessions AC \
+-j /path/to/Refseq90.DNA.json   
 ```
 
 - For multiple files
@@ -268,14 +272,15 @@ The resulting file should look like
 {
   "FilterDomainFastas.filterScriptPath": "String",
   "FilterDomainFastas.Cat.zip": "Boolean (optional, default = false)",
-  "FilterDomainFastas.domainDir": "String",
   "FilterDomainFastas.includeAccFile": "File? (optional)",
+  "FilterDomainFastas.domainInputDir": "String",
   "FilterDomainFastas.excludeAccFile": "File? (optional)",
   "FilterDomainFastas.taxDbPath": "String",
   "FilterDomainFastas.includeAccPrefixes": "Array[String]? (optional)",
   "FilterDomainFastas.excludeAccPrefixes": "Array[String]? (optional)",
   "FilterDomainFastas.FilterFasta.threads": "Int (optional, default = 1)",
   "FilterDomainFastas.excludeTaxa": "Array[String]+? (optional)",
+  "FilterDomainFastas.outputDir": "String",
   "FilterDomainFastas.Dustmasker.isGzipped": "Boolean? (optional, default = true)",
   "FilterDomainFastas.FilterFasta.preCommand": "String? (optional)",
   "FilterDomainFastas.Cat.unzip": "Boolean (optional, default = false)",
@@ -283,6 +288,7 @@ The resulting file should look like
   "FilterDomainFastas.dustmaskerExe": "String",
   "FilterDomainFastas.refseqJson": "String"
 }
+
 ```
 These are all the configurable options. Options having an (optional) tag,
 can be omitted but the rest should be filled in according to your setup. Note
@@ -291,15 +297,16 @@ that the options hint to the type of input that is expected.
 A minimal working config file, for our case, would look like this (replace
 the paths according to your directories)
 ```
- {
+{
   "FilterDomainFastas.filterScriptPath": "/path/to/filter_fasta.py",
-  "FilterDomainFastas.domainDir": "/path/to/downloaded/viral",
-  "FilterDomainFastas.taxDbPath": "/path/to/ete3/taxa.sqlite",
+  "FilterDomainFastas.domainInputDir": "/path/to/downloaded/<domain>.*fna.gz",
+  "FilterDomainFastas.taxDbPath": "/path/to/ete3_db/taxa.sqlite",
   "FilterDomainFastas.excludeAccPrefixes": ["AC"],
   "FilterDomainFastas.excludeTaxa": ["10508"],
-  "FilterDomainFastas.FilterFasta.preCommand": "source activate ete3_environment",
+  "FilterDomainFastas.outputDir": "/path/to/filtered_fastas",
+  "FilterDomainFastas.FilterFasta.preCommand": "source activate ete3",
   "FilterDomainFastas.dustmaskerExe": "/path/to/ncbi-tools/bin/dustmasker",
-  "FilterDomainFastas.refseqJson": "/path/to/Refseq90.DNA.json"
+  "FilterDomainFastas.refseqJson": "/path/to/Refseq90.json"
 }
 ```
 
