@@ -1,7 +1,8 @@
 import "FilterDomainTasks.wdl" as Tasks
 
 workflow FilterDomainFastas {
-	String domainDir
+	String domainInputDir
+	String outputDir
 	String filterScriptPath
 	String refseqJson
 	String taxDbPath
@@ -15,7 +16,7 @@ workflow FilterDomainFastas {
 	
 	call Tasks.MakeScatterList as RawFastas {
 		input:
-			dirName = domainDir,
+			dirName = domainInputDir,
 			pattern = "*fna.gz"
 	}
 
@@ -25,7 +26,9 @@ workflow FilterDomainFastas {
 			    scriptPath = filterScriptPath,
 			    refseqJson = refseqJson,
 			    taxDbPath = taxDbPath,
-				fastaFilePath = fastaFile,
+				fastaIn = fastaFile,
+				fastaOutPath = outputDir + '/' +
+				               sub(basename(fastaFile), "genomic", "filtered_genomic"),
 				includeAccPrefixes = includeAccPrefixes,
 				excludeAccPrefixes = excludeAccPrefixes,
 				includeTaxa = includeTaxa,
@@ -38,7 +41,7 @@ workflow FilterDomainFastas {
 	call Tasks.WriteFilterStats {
 		input:
 			stats = FilterFasta.stats,
-			tsvFilePath = domainDir + "/filtering.tsv"
+			tsvFilePath = outputDir + "/filtering.tsv"
 	}
 
 	# This is to make sure fasta files are first filtered
@@ -47,7 +50,7 @@ workflow FilterDomainFastas {
 	if (size(WriteFilterStats.tsvFile) > 0) {
 		call Tasks.MakeScatterList as FilteredFastas {
 			input:
-				dirName = domainDir,
+				dirName = outputDir,
 				pattern = "*filtered_genomic.fna.gz"
 		}
 	} 
@@ -68,7 +71,7 @@ workflow FilterDomainFastas {
 		call Tasks.ConcatenateTextFiles as Cat {
 			input:
 				fileList = Dustmasker.dustmaskedFile,
-				combinedFilePath = domainDir + "/dustmasked.filtered.fna.gz"
+				combinedFilePath = outputDir + "/dustmasked.filtered.fna.gz"
 		}
 	}
 }

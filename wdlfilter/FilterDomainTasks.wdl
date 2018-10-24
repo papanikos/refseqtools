@@ -1,6 +1,7 @@
 task FilterFasta {
 	String? preCommand
-	String fastaFilePath # Using String to handle script's os.remove/rename stuff
+	File fastaIn
+	String fastaOutPath
 	String scriptPath
 	Array[String]+? includeTaxa
 	Array[String]+? excludeTaxa
@@ -11,16 +12,16 @@ task FilterFasta {
 	File? refseqJson
 	String? taxDbPath
 
-	String filteredFastaPath = sub(fastaFilePath, "genomic", "filtered_genomic")
-
 	Int mem = if (defined(includeTaxa) || defined(excludeTaxa)) then 8 else 4
 	Int threads = 1	
 
 	command {
 		set -e -o pipefail
+		${"mkdir -p $(dirname " + fastaOutPath + ")"}
 		${preCommand}
 		python ${scriptPath} \
-		-i ${fastaFilePath} \
+		-i ${fastaIn} \
+		-o ${fastaOutPath} \
 		${true="--include-accessions " false="" defined(includeAccPrefixes)} ${sep="," includeAccPrefixes} \
 		${true="--exclude-accessions " false="" defined(excludeAccPrefixes)} ${sep="," excludeAccPrefixes} \
 		${"--include-accessions-from-file " + includeAccFile} \
@@ -33,7 +34,7 @@ task FilterFasta {
 
 	output {
 		Array[String] stats = read_lines(stdout())
-		File? filteredFasta = filteredFastaPath
+		File filteredFasta = fastaOutPath
 	}
 
 	runtime {
@@ -48,7 +49,7 @@ task MakeScatterList {
 
 	command {
 		set -e -o pipefail
-		find ${dirName} -name ${pattern}
+		find ${dirName} -name "${pattern}"
 	}
 
 	output {
