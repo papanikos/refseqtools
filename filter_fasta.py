@@ -10,6 +10,10 @@ parser.add_argument('-i',
                     help="Input file to filter",
                     required=True
                     )
+parser.add_argument('-o',
+                    dest="fasta_out",
+                    help="Fasta ouput file. Depending on extensions can be gzipped or not",
+                    required=True)
 parser.add_argument('--include-taxa',
                     dest='taxa_in',
                     help="A comma separated list of taxa to be filtered",
@@ -58,13 +62,14 @@ class FastaFilterer:
     or accession prefixes.
     """
 
-    def __init__(self, fp_in,
+    def __init__(self, fp_in, fp_out,
                  include_taxa, exclude_taxa,
                  include_accessions, exclude_accessions,
                  accessions_infile, accessions_exfile,
                  acc2taxid_json, dbfile):
 
         self.fp_in = fp_in
+        self.fp_out = fp_out
 
         # Load the taxonomy info if taxa based filtering is defined
         if include_taxa or exclude_taxa:
@@ -273,67 +278,7 @@ class FastaFilterer:
 
         return set(final_accessions)
 
-    def make_output_filename(self, fp_in, fasta_type="genomic"):
-        filtered_prefix = "filtered_" + fasta_type
-        self.fp_out = fp_in.replace(fasta_type, filtered_prefix)
-        return self.fp_out
-
-    def peek(self, iterable):
-        """
-        This checks if a generator is empty
-        taken from https://stackoverflow.com/a/664239
-        :param iterable: A generator
-        :return:
-        """
-        try:
-            first = next(iterable)
-        except StopIteration:
-            return None
-        return first, itertools.chain([first], iterable)
-
-    def filter_records_to_file(self, fp_in, accessions_list):
-        counter = 0
-        fp_out = self.make_output_filename(fp_in)
-        # Create an iterator
-        input_seq_iterator = SeqIO.parse(optionally_compressed_handle(fp_in, 'r'), "fasta")
-        # Filter the sequences based on the ids
-        keepers = (record for record in input_seq_iterator
-                   if record.id in accessions_list)
-
-        # Check if the iterator is empty so empty files won't be open for writing
-        res = self.peek(keepers)
-        if res is not None:
-            first, seqs = res
-            with optionally_compressed_handle(fp_out, 'w') as fout:
-                for record in seqs:
-                    SeqIO.write(record, fout, format="fasta")
-                    counter += 1
-        else:
-            print("No sequences were matched")
-
-        return counter, fp_out
-
-    # THIS IS OBSOLETE
-    def filter_accession_to_file(self, fp_in, acc_prefixes):
-        fp_out = self.make_output_filename(fp_in)
-        counter = 0
-        with optionally_compressed_handle(fp_out, 'w') as fout, optionally_compressed_handle(fp_in, 'r') as fin:
-            input_seq_iterator = SeqIO.parse(fin, format="fasta")
-            for record in input_seq_iterator:
-                if not self.pre_accessions:
-                    if keep_accession(record.id, acc_prefixes):
-                        counter += 1
-                        SeqIO.write(record, fout, format="fasta")
-                elif keep_accession(record.id, self.acc_prefixes) or record.id in self.pre_accessions:
-                    counter += 1
-                    SeqIO.write(record, fout, format="fasta")
-        if counter == 0:
-            print("No accessions were found matching the parameters.")
-            os.remove(fp_out)
-        return counter
-
-    def write_accessions_to_file(self, fp_in, accessions):
-        fp_out = self.make_output_filename(fp_in)
+    def write_accessions_to_file(self, fp_in, fp_out, accessions):
         out_counter, in_counter = 0, 0
         with optionally_compressed_handle(fp_out, 'w') as fout, optionally_compressed_handle(fp_in, 'r') as fin:
             input_seq_iterator = SeqIO.parse(fin, format="fasta")
@@ -378,7 +323,7 @@ if __name__ == '__main__':
     else:
         acc_ex_file = None
 
-    filterObj = FastaFilterer(fp_in=args.fasta_in,
+    filterObj = FastaFilterer(fp_in=args.fasta_in, fp_out=args.fasta_out,
                               acc2taxid_json=args.json_fp,
                               include_taxa=taxa_in, exclude_taxa=taxa_ex,
                               include_accessions=acc_in, exclude_accessions=acc_ex,
@@ -393,18 +338,19 @@ if __name__ == '__main__':
     # if filtering didn't change the original set
     if final_accessions == fasta_accessions:
         # For now just rename the file - mark as processed
-        outfile = filterObj.make_output_filename(filterObj.fp_in)
-        os.rename(filterObj.fp_in, outfile)
-        print("{}\t(renamed)\t{}\t{}\t{}".format(filterObj.fp_in,
-                                                 len(final_accessions),
-                                                 outfile,
+        fp_in, seqs_in, fp_out, seqs_out = filterObj.write_accessions_to_file(filterObj.fp_in,
+                                                                              filterObj.fp_out,
+                                                                              final_accessions)
+        print("{}\t(copied)\t{}\t{}\t{}".format(filterObj.fp_in,
+                                                 len(fasta_accessions),
+                                                 filterObj.fp_out,
                                                  len(final_accessions)))
     elif len(final_accessions) == 0:
-        os.remove(filterObj.fp_in)
-        print("{}\t(removed)\t{}\tNA\t0".format(filterObj.fp_in, len(fasta_accessions)))
+        print("{}\t(untouched)\t{}\tNA\t0".format(filterObj.fp_in, len(fasta_accessions)))
     else:
-        fp_in, seqs_in, fp_out, seqs_out = filterObj.write_accessions_to_file(filterObj.fp_in, final_accessions)
-        os.remove(filterObj.fp_in)
-        print("{}\t(removed)\t{}\t{}\t{}".format(fp_in, seqs_in, fp_out, seqs_out))
+        fp_in, seqs_in, fp_out, seqs_out = filterObj.write_accessions_to_file(filterObj.fp_in,
+                                                                              filterObj.fp_out,
+                                                                              final_accessions)
+        print("{}\t(new)\t{}\t{}\t{}".format(fp_in, seqs_in, fp_out, seqs_out))
 
     print("Done!")
