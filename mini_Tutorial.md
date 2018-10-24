@@ -88,7 +88,7 @@ utility, where a taxid is used as a primary key and all accessions and sequence
 sizes are stored under it.
 
 ```
-$ python convert_acc2taxid -i Refseq90.DNA.gz -o Refseq90.DNA.json 
+$ python convert_acc2taxid_to_json.py -i Refseq90.DNA.gz -o Refseq90.DNA.json 
 ```
 
 ## Step 1b. Getting the taxonomy tree
