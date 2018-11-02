@@ -264,7 +264,6 @@ are defined.
 
 Once the jars are downloaded, head over to the downloaded wdlfilter directory and run
 ```
-mkdir filtered_fastas
 cd wdlfilter/
 java -jar /path/to/womtool-34.jar inputs FilterDomain.wdl > viral.inputs.json 
 ```
