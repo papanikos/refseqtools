@@ -138,7 +138,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> from ete3 import NCBITaxa
 >>> connection = sqlite3.connect("/path/to/taxa.sqlite") # Change the paths
 >>> connection.close()
->>> NCBITaxa(dbfile="path/to/taxa.sqlite", taxdump_file="path/to/taxdump.tar.gz")
+>>> NCBITaxa(dbfile="/path/to/taxa.sqlite", taxdump_file="/path/to/taxdump.tar.gz")
 Loading node names...
 1934824 names loaded.
 205002 synonyms loaded.
@@ -179,7 +179,7 @@ will summarize all the information for us
 
 ```
 $ python annotate_tree.py -t 10239 \
--db /path/to/ete3_db \
+-db /path/to/ete3_db/ \
 -j /path/to/Refseq90.DNA.json \
 -r viruses.svg
 ```
@@ -194,7 +194,7 @@ of the script.
 $ python annotate_tree.py -t 10239 \
 -db /path/to/ete3_db \
 -j /path/to/Refseq90.DNA.json \
--r viruses.svg \
+-r viruses.family.svg \
 -prune family 
 ```
 
@@ -206,7 +206,7 @@ viruses. We can now retrieve the fasta files these are contained in.
 This is done with the `download_domain.py` utility.
 
 ```
-$ python download_refseq_domain.py -d viral -o /path/to/output_dir
+$ python download_refseq_domain.py -d viral -o /path/to/output_dir/
 ```
 
 Once the download is complete, there should be 3 fasta files (for release 90) including all the
@@ -264,6 +264,8 @@ are defined.
 
 Once the jars are downloaded, head over to the downloaded wdlfilter directory and run
 ```
+mkdir filtered_fastas
+cd wdlfilter/
 java -jar /path/to/womtool-34.jar inputs FilterDomain.wdl > viral.inputs.json 
 ```
 
@@ -299,11 +301,11 @@ the paths according to your directories)
 ```
 {
   "FilterDomainFastas.filterScriptPath": "/path/to/filter_fasta.py",
-  "FilterDomainFastas.domainInputDir": "/path/to/downloaded/<domain>.*fna.gz",
+  "FilterDomainFastas.domainInputDir": "/path/to/downloaded/domain/",
   "FilterDomainFastas.taxDbPath": "/path/to/ete3_db/taxa.sqlite",
   "FilterDomainFastas.excludeAccPrefixes": ["AC"],
   "FilterDomainFastas.excludeTaxa": ["10508"],
-  "FilterDomainFastas.outputDir": "/path/to/filtered_fastas",
+  "FilterDomainFastas.outputDir": "/path/to/filtered_fastas/",
   "FilterDomainFastas.FilterFasta.preCommand": "source activate ete3",
   "FilterDomainFastas.dustmaskerExe": "/path/to/ncbi-tools/bin/dustmasker",
   "FilterDomainFastas.refseqJson": "/path/to/Refseq90.json"
@@ -322,7 +324,8 @@ file within the input directory.
 
 Since centrifuge-build expects an unzipped file
 ``` 
-zcat dustmasked.filtered.fna.gz > viral_sequences.fna
+cd ../
+zcat /path/to/filtered_fastas/dustmasked.filtered.fna.gz > /path/to/filtered_fastas/viral_sequences.fna
 ```
 
 ## Step 5. Building the index with centrifuge
