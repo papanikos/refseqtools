@@ -192,7 +192,7 @@ of the script.
 
 ``` 
 $ python annotate_tree.py -t 10239 \
--db /path/to/ete3_db \
+-db /path/to/ete3_db/ \
 -j /path/to/Refseq90.DNA.json \
 -r viruses.family.svg \
 -prune family 
