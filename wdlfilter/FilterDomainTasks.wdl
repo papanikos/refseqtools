@@ -34,7 +34,7 @@ task FilterFasta {
 
 	output {
 		Array[String] stats = read_lines(stdout())
-		File filteredFasta = fastaOutPath
+		File? filteredFasta = fastaOutPath
 	}
 
 	runtime {
@@ -75,13 +75,14 @@ task WriteFilterStats {
 
 task DustmaskFasta {
 	File fastaFilePath
-	String dustmaskedFilePath = sub(fastaFilePath, "fna.gz", "dustmasked.fna.gz")
+	String dustmaskedFilePath
 	Boolean? isGzipped = true
-	# This needs to be speci
+	# This needs to be specified
 	String dustmaskerExe
 
 	command {
 		set -e -o pipefail
+		${"mkdir -p $(dirname " + dustmaskedFilePath + ")"}
 		zcat ${fastaFilePath} | \
 		${dustmaskerExe} -infmt fasta -in - -outfmt fasta | \
 		sed '/^>/! s/[^AGCT]/N/g' | \

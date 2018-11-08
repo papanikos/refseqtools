@@ -288,6 +288,7 @@ The resulting file should look like
   "FilterDomainFastas.includeTaxa": "Array[String]+? (optional)",
   "FilterDomainFastas.dustmaskerExe": "String",
   "FilterDomainFastas.refseqJson": "String"
+  "FilterDomainFastas.dustmaskOnly: "Boolean (optional, default=false)"
 }
 
 ```
@@ -320,6 +321,8 @@ java -jar /path/to/cromwell-34.jar run FilterDomain.wdl -i inputs.json
 
 If the workflow run succeeds, there should be a `dustmasked.filtered.fna.gz`
 file within the input directory.
+In case you would like to skip the filtering step and only dustmask the files
+before running the index-building step you can set the `dustmaskOnly` option to `true`.
 
 Since centrifuge-build expects an unzipped file
 ``` 
